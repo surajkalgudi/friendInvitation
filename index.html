@@ -40,7 +40,7 @@
       }
 
       html.snap-enabled {
-        scroll-snap-type: y mandatory;
+        scroll-snap-type: y proximity;
       }
 
       body {
@@ -61,7 +61,6 @@
         justify-content: center;
         position: relative;
         scroll-snap-align: start;
-        scroll-snap-stop: always;
         overflow: hidden;
       }
 
@@ -978,7 +977,7 @@
       <!-- ===== VIDEO INVITATION ===== -->
       <section class="full-section video-section" id="video-section">
         <div class="video-wrapper">
-          <video id="invitation-video" loop muted playsinline>
+          <video id="invitation-video" loop muted playsinline preload="auto">
             <source src="Invitation.mp4" type="video/mp4" />
           </video>
         </div>
@@ -1066,6 +1065,11 @@
         const bgMusic = document.getElementById("bg-music");
         bgMusic.play().catch(() => {});
         document.getElementById("music-toggle").classList.add("visible");
+
+        // Pre-buffer the video so it's ready when user scrolls there
+        const vid = document.getElementById("invitation-video");
+        vid.load();
+        vid.play().then(() => vid.pause()).catch(() => {});
 
         // Show content immediately as curtains start moving
         mainContent.classList.add("visible");
@@ -1351,9 +1355,7 @@
         bgMusic.pause();
       });
 
-      // ===== GOOGLE SHEETS RSVP =====
-      const GOOGLE_SHEETS_API =
-        "https://script.google.com/macros/s/AKfycbxBichUOY9mANTJsXugaiQsCLN7mX5ARh5Mx8Ak3WdV2Xx_kbDZoSSLceF6kOOvcIfy/exec";
+      // ===== RSVP =====
 
       document
         .getElementById("rsvp-btn")
@@ -1414,14 +1416,12 @@
                 guests: modal.querySelector("#guests").value || "1",
                 message: modal.querySelector("#message").value || "No message",
               };
-              // Fire and forget - don't wait for response (no-cors won't return one anyway)
-              fetch(GOOGLE_SHEETS_API, {
+              // Send RSVP through Vercel serverless function
+              fetch("/api/rsvp", {
                 method: "POST",
-                mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
               }).catch(() => {});
-              // Show success immediately
               modal.querySelector(".modal-content").innerHTML = `
           <div style="padding:30px 20px;">
             <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" stroke-width="2" style="width:50px;height:50px;margin-bottom:15px;">
